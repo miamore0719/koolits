@@ -25,9 +25,13 @@ const POS = () => {
   const [amountPaid, setAmountPaid] = useState('');
   const [processingPayment, setProcessingPayment] = useState(false);
   
-  // Orders view
+  // Orders view with date filtering
   const [showOrdersView, setShowOrdersView] = useState(false);
   const [recentOrders, setRecentOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   const user = getUserInfo();
 
@@ -50,26 +54,78 @@ const POS = () => {
     }
   };
 
-  const loadRecentOrders = async () => {
+  const loadRecentOrders = async (useCustomDates = false) => {
     try {
-      const response = await orderAPI.getAll({ limit: 20, sort: '-orderDate' });
+      setLoadingOrders(true);
+      const response = await orderAPI.getAll({ limit: 100, sort: '-orderDate' });
+      
       if (response.data.success) {
-        setRecentOrders(response.data.data);
+        let ordersToDisplay = response.data.data;
+        
+        if (useCustomDates && startDate && endDate) {
+          // Filter by custom date range
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          
+          ordersToDisplay = ordersToDisplay.filter(order => {
+            const orderDate = new Date(order.orderDate || order.createdAt);
+            return orderDate >= start && orderDate <= end;
+          });
+        } else {
+          // Default: Show only today's latest 5 orders
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const todayEnd = new Date();
+          todayEnd.setHours(23, 59, 59, 999);
+          
+          ordersToDisplay = ordersToDisplay.filter(order => {
+            const orderDate = new Date(order.orderDate || order.createdAt);
+            return orderDate >= today && orderDate <= todayEnd;
+          });
+          
+          // Take only the latest 5
+          ordersToDisplay = ordersToDisplay.slice(0, 5);
+        }
+        
+        setRecentOrders(ordersToDisplay);
       }
     } catch (error) {
       console.error('Error loading orders:', error);
+    } finally {
+      setLoadingOrders(false);
     }
+  };
+
+  const handleDateFilterApply = () => {
+    if (!startDate || !endDate) {
+      alert('Please select both start and end dates');
+      return;
+    }
+    
+    if (new Date(startDate) > new Date(endDate)) {
+      alert('Start date must be before end date');
+      return;
+    }
+    
+    loadRecentOrders(true);
+  };
+
+  const handleDateFilterClear = () => {
+    setStartDate('');
+    setEndDate('');
+    setShowDateFilter(false);
+    loadRecentOrders(false); // Load default (today's latest 5)
   };
 
   const filterProducts = () => {
     let filtered = products;
     
-    // Filter by category
     if (currentCategory !== 'all') {
       filtered = filtered.filter(p => p.category === currentCategory);
     }
     
-    // Filter by search
     if (searchQuery) {
       filtered = filtered.filter(p => 
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -197,18 +253,15 @@ const POS = () => {
       if (response.data.success) {
         alert('Order completed successfully!');
         
-        // Print receipt
         if (window.confirm('Print receipt?')) {
           printReceipt(response.data.data);
         }
 
-        // Clear cart and close modal
         setCart([]);
         closePaymentModal();
         
-        // Refresh recent orders if viewing
         if (showOrdersView) {
-          loadRecentOrders();
+          loadRecentOrders(showDateFilter);
         }
       }
     } catch (error) {
@@ -221,7 +274,7 @@ const POS = () => {
 
   const toggleOrdersView = () => {
     if (!showOrdersView) {
-      loadRecentOrders();
+      loadRecentOrders(false); // Load default view
     }
     setShowOrdersView(!showOrdersView);
   };
@@ -233,7 +286,6 @@ const POS = () => {
       <div className="pos-container">
         {/* Left Side - Products */}
         <div className="products-section">
-          {/* Search and Filters */}
           <div className="search-filter-bar">
             <div className="search-box">
               <i className="fas fa-search"></i>
@@ -246,7 +298,6 @@ const POS = () => {
             </div>
           </div>
 
-          {/* Category Tabs */}
           <div className="category-tabs">
             <button
               className={`category-tab ${currentCategory === 'all' ? 'active' : ''}`}
@@ -280,7 +331,6 @@ const POS = () => {
             </button>
           </div>
 
-          {/* Products Grid */}
           <div className="products-grid">
             {loading ? (
               <div className="loading-state">
@@ -334,31 +384,159 @@ const POS = () => {
 
           {showOrdersView ? (
             <div className="orders-view">
-              <h3>Recent Orders</h3>
-              <div className="orders-list">
-                {recentOrders.length === 0 ? (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h3 style={{ margin: 0 }}>
+                  {showDateFilter && startDate && endDate 
+                    ? `Orders (${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()})`
+                    : 'Latest 5 Orders Today'
+                  }
+                </h3>
+                <button
+                  className="btn btn-small"
+                  onClick={() => setShowDateFilter(!showDateFilter)}
+                  style={{ 
+                    background: showDateFilter ? '#10b981' : '#6366f1',
+                    color: 'white',
+                    border: 'none',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px'
+                  }}
+                >
+                  <i className="fas fa-calendar-alt"></i> {showDateFilter ? 'Hide' : 'Filter'}
+                </button>
+              </div>
+
+              {showDateFilter && (
+                <div style={{
+                  background: '#f8fafc',
+                  padding: '15px',
+                  borderRadius: '8px',
+                  marginBottom: '15px',
+                  border: '1px solid #e2e8f0'
+                }}>
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '5px', color: '#475569' }}>
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '6px',
+                        fontSize: '14px'
+                      }}
+                    />
+                  </div>
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '5px', color: '#475569' }}>
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '6px',
+                        fontSize: '14px'
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={handleDateFilterApply}
+                      disabled={!startDate || !endDate}
+                      style={{
+                        flex: 1,
+                        padding: '8px',
+                        background: '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        opacity: (!startDate || !endDate) ? 0.5 : 1
+                      }}
+                    >
+                      <i className="fas fa-filter"></i> Apply
+                    </button>
+                    <button
+                      onClick={handleDateFilterClear}
+                      style={{
+                        flex: 1,
+                        padding: '8px',
+                        background: '#64748b',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      <i className="fas fa-times"></i> Clear
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="orders-list" style={{ maxHeight: showDateFilter ? '400px' : '550px', overflowY: 'auto' }}>
+                {loadingOrders ? (
+                  <div className="loading-state">
+                    <div className="loading-spinner"></div>
+                    <p>Loading orders...</p>
+                  </div>
+                ) : recentOrders.length === 0 ? (
                   <div className="empty-state">
                     <i className="fas fa-receipt"></i>
-                    <p>No recent orders</p>
+                    <p>No orders found</p>
+                    <small>
+                      {showDateFilter && startDate && endDate 
+                        ? 'Try a different date range'
+                        : 'No orders today yet'
+                      }
+                    </small>
                   </div>
                 ) : (
                   recentOrders.map((order) => (
                     <div key={order._id} className="order-item">
                       <div className="order-header">
-                        <strong>{order.orderNumber}</strong>
+                        <strong>#{order.orderNumber || order._id?.slice(-6)}</strong>
                         <span className="badge badge-success">{order.status}</span>
                       </div>
                       <div className="order-details">
-                        <small>{new Date(order.orderDate).toLocaleString()}</small>
+                        <small>
+                          {new Date(order.orderDate || order.createdAt).toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </small>
                         <strong>{formatCurrency(order.total)}</strong>
                       </div>
                       <div className="order-items">
-                        {order.items.map((item, idx) => (
+                        {order.items?.map((item, idx) => (
                           <div key={idx} className="order-item-detail">
                             {item.quantity}x {item.name} ({item.size})
                           </div>
                         ))}
                       </div>
+                      {order.cashier && (
+                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '5px' }}>
+                          Cashier: {order.cashier}
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
@@ -366,7 +544,6 @@ const POS = () => {
             </div>
           ) : (
             <>
-              {/* Cart Items */}
               <div className="cart-items">
                 {cart.length === 0 ? (
                   <div className="empty-cart">
@@ -407,7 +584,6 @@ const POS = () => {
                 )}
               </div>
 
-              {/* Cart Summary */}
               <div className="cart-summary">
                 <div className="summary-row">
                   <span>Subtotal:</span>
@@ -419,7 +595,6 @@ const POS = () => {
                 </div>
               </div>
 
-              {/* Cart Actions */}
               <div className="cart-actions">
                 <button
                   className="btn btn-danger"
@@ -441,7 +616,6 @@ const POS = () => {
         </div>
       </div>
 
-      {/* Product Modal - Continuing in next part */}
       {showProductModal && selectedProduct && (
         <ProductModal
           product={selectedProduct}
@@ -456,7 +630,6 @@ const POS = () => {
         />
       )}
 
-      {/* Payment Modal */}
       {showPaymentModal && (
         <PaymentModal
           cartTotal={cartTotal}
@@ -474,7 +647,7 @@ const POS = () => {
   );
 };
 
-// Product Modal Component
+// Product Modal and Payment Modal components remain the same
 const ProductModal = ({
   product,
   selectedSize,
@@ -509,7 +682,6 @@ const ProductModal = ({
             </p>
           )}
 
-          {/* Size Selection */}
           <div className="form-group">
             <label>Select Size *</label>
             <div className="size-options">
@@ -526,7 +698,6 @@ const ProductModal = ({
             </div>
           </div>
 
-          {/* Toppings */}
           {product.toppings && product.toppings.length > 0 && (
             <div className="form-group">
               <label>Add Toppings (Optional)</label>
@@ -546,7 +717,6 @@ const ProductModal = ({
             </div>
           )}
 
-          {/* Quantity */}
           <div className="form-group">
             <label>Quantity</label>
             <div className="quantity-control">
@@ -571,7 +741,6 @@ const ProductModal = ({
             </div>
           </div>
 
-          {/* Price Summary */}
           <div className="price-summary">
             <div className="price-row">
               <span>Item Price:</span>
@@ -597,7 +766,6 @@ const ProductModal = ({
   );
 };
 
-// Payment Modal Component
 const PaymentModal = ({
   cartTotal,
   paymentMethod,
@@ -634,7 +802,6 @@ const PaymentModal = ({
             <div className="total-amount">{formatCurrency(cartTotal)}</div>
           </div>
 
-          {/* Payment Method */}
           <div className="form-group">
             <label>Payment Method</label>
             <div className="payment-methods">
@@ -651,7 +818,6 @@ const PaymentModal = ({
             </div>
           </div>
 
-          {/* Amount Paid */}
           {paymentMethod === 'cash' && (
             <div className="form-group">
               <label>Amount Paid</label>

@@ -518,18 +518,18 @@
 }
 
 /* ========== Responsive Design ========== */
-@media (max-width: 1024px) {
+@media (max-width: 600px) {
   .pos-container {
     grid-template-columns: 1fr;
     height: auto;
   }
 
   .products-section {
-    min-height: 60vh;
+    min-height: auto;
   }
 
   .cart-section {
-    height: 40vh;
+    height: auto;
   }
 
   .products-grid {

@@ -777,6 +777,13 @@ const PaymentModal = ({
   onAmountPaidChange,
   onProcessOrder
 }) => {
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-PH', {
+      style: 'currency',
+      currency: 'PHP'
+    }).format(amount);
+  };
+
   const paymentMethods = [
     { id: 'cash', name: 'Cash', icon: 'fa-money-bill-wave' },
     { id: 'card', name: 'Card', icon: 'fa-credit-card' },
@@ -785,42 +792,191 @@ const PaymentModal = ({
   ];
 
   return (
-    <div className="modal-overlay active" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>
-            <i className="fas fa-cash-register"></i> Payment
+    <div 
+      className="modal-overlay active" 
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: '20px'
+      }}
+    >
+      <div 
+        className="modal" 
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'white',
+          borderRadius: '16px',
+          width: '100%',
+          maxWidth: '500px',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+        }}
+      >
+        {/* Header - Fixed */}
+        <div 
+          className="modal-header"
+          style={{
+            padding: '20px 24px',
+            borderBottom: '1px solid #e2e8f0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexShrink: 0
+          }}
+        >
+          <h2 style={{
+            margin: 0,
+            fontSize: '20px',
+            fontWeight: '700',
+            color: '#1e293b',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <i className="fas fa-cash-register" style={{ color: '#10b981' }}></i>
+            Payment
           </h2>
-          <button className="modal-close" onClick={onClose}>
+          <button 
+            className="modal-close" 
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '24px',
+              cursor: 'pointer',
+              color: '#64748b',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '32px',
+              height: '32px',
+              borderRadius: '6px',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#f1f5f9';
+              e.currentTarget.style.color = '#1e293b';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'none';
+              e.currentTarget.style.color = '#64748b';
+            }}
+          >
             <i className="fas fa-times"></i>
           </button>
         </div>
         
-        <div className="modal-body">
-          <div className="payment-total">
-            <h3>Total Amount</h3>
-            <div className="total-amount">{formatCurrency(cartTotal)}</div>
+        {/* Body - Scrollable if needed, but optimized to fit */}
+        <div 
+          className="modal-body"
+          style={{
+            padding: '24px',
+            overflowY: 'auto',
+            flexGrow: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px'
+          }}
+        >
+          {/* Total Amount - Compact */}
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            padding: '16px 20px',
+            borderRadius: '12px',
+            textAlign: 'center',
+            color: 'white'
+          }}>
+            <div style={{ fontSize: '13px', opacity: 0.9, marginBottom: '4px', fontWeight: '500' }}>
+              Total Amount
+            </div>
+            <div style={{ fontSize: '32px', fontWeight: '700', letterSpacing: '-0.5px' }}>
+              {formatCurrency(cartTotal)}
+            </div>
           </div>
 
-          <div className="form-group">
-            <label>Payment Method</label>
-            <div className="payment-methods">
+          {/* Payment Method - Compact Grid */}
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: '600',
+              color: '#475569',
+              marginBottom: '10px'
+            }}>
+              Payment Method
+            </label>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '10px'
+            }}>
               {paymentMethods.map((method) => (
                 <button
                   key={method.id}
                   className={`payment-method-btn ${paymentMethod === method.id ? 'active' : ''}`}
                   onClick={() => onPaymentMethodChange(method.id)}
+                  style={{
+                    padding: '14px 12px',
+                    border: paymentMethod === method.id ? '2px solid #10b981' : '2px solid #e2e8f0',
+                    borderRadius: '10px',
+                    background: paymentMethod === method.id ? '#ecfdf5' : 'white',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    color: paymentMethod === method.id ? '#10b981' : '#64748b'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (paymentMethod !== method.id) {
+                      e.currentTarget.style.borderColor = '#cbd5e1';
+                      e.currentTarget.style.background = '#f8fafc';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (paymentMethod !== method.id) {
+                      e.currentTarget.style.borderColor = '#e2e8f0';
+                      e.currentTarget.style.background = 'white';
+                    }
+                  }}
                 >
-                  <i className={`fas ${method.icon}`}></i>
+                  <i 
+                    className={`fas ${method.icon}`}
+                    style={{ fontSize: '22px' }}
+                  ></i>
                   <span>{method.name}</span>
                 </button>
               ))}
             </div>
           </div>
 
+          {/* Amount Paid - Compact */}
           {paymentMethod === 'cash' && (
-            <div className="form-group">
-              <label>Amount Paid</label>
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: '600',
+                color: '#475569',
+                marginBottom: '8px'
+              }}>
+                Amount Paid
+              </label>
               <input
                 type="number"
                 value={amountPaid}
@@ -828,45 +984,167 @@ const PaymentModal = ({
                 placeholder="Enter amount"
                 step="0.01"
                 autoFocus
+                style={{
+                  width: '100%',
+                  padding: '14px 16px',
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  border: '2px solid #e2e8f0',
+                  borderRadius: '10px',
+                  outline: 'none',
+                  transition: 'border-color 0.2s',
+                  textAlign: 'center'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#10b981';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e2e8f0';
+                }}
               />
-              {change >= 0 && amountPaid && (
-                <div className="change-display">
-                  Change: {formatCurrency(change)}
-                </div>
-              )}
-              {change < 0 && amountPaid && (
-                <div className="insufficient-payment">
-                  Insufficient: {formatCurrency(Math.abs(change))}
+              
+              {/* Change Display - Compact */}
+              {amountPaid && (
+                <div style={{
+                  marginTop: '12px',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  background: change >= 0 ? '#ecfdf5' : '#fef2f2',
+                  border: `2px solid ${change >= 0 ? '#10b981' : '#ef4444'}`,
+                  textAlign: 'center'
+                }}>
+                  <div style={{
+                    fontSize: '12px',
+                    color: change >= 0 ? '#059669' : '#dc2626',
+                    fontWeight: '600',
+                    marginBottom: '2px'
+                  }}>
+                    {change >= 0 ? 'Change' : 'Insufficient'}
+                  </div>
+                  <div style={{
+                    fontSize: '22px',
+                    fontWeight: '700',
+                    color: change >= 0 ? '#10b981' : '#ef4444'
+                  }}>
+                    {formatCurrency(Math.abs(change))}
+                  </div>
                 </div>
               )}
             </div>
           )}
         </div>
 
-        <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onClose} disabled={processing}>
+        {/* Footer - Fixed */}
+        <div 
+          className="modal-footer"
+          style={{
+            padding: '16px 24px',
+            borderTop: '1px solid #e2e8f0',
+            display: 'flex',
+            gap: '12px',
+            flexShrink: 0
+          }}
+        >
+          <button 
+            className="btn btn-secondary" 
+            onClick={onClose} 
+            disabled={processing}
+            style={{
+              flex: 1,
+              padding: '14px',
+              fontSize: '15px',
+              fontWeight: '600',
+              border: '2px solid #e2e8f0',
+              background: 'white',
+              color: '#64748b',
+              borderRadius: '10px',
+              cursor: processing ? 'not-allowed' : 'pointer',
+              opacity: processing ? 0.5 : 1,
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              if (!processing) {
+                e.currentTarget.style.background = '#f8fafc';
+                e.currentTarget.style.borderColor = '#cbd5e1';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!processing) {
+                e.currentTarget.style.background = 'white';
+                e.currentTarget.style.borderColor = '#e2e8f0';
+              }
+            }}
+          >
             Cancel
           </button>
           <button
             className="btn btn-success"
             onClick={onProcessOrder}
             disabled={processing || (paymentMethod === 'cash' && change < 0)}
+            style={{
+              flex: 2,
+              padding: '14px',
+              fontSize: '15px',
+              fontWeight: '600',
+              border: 'none',
+              background: (processing || (paymentMethod === 'cash' && change < 0)) 
+                ? '#94a3b8' 
+                : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              color: 'white',
+              borderRadius: '10px',
+              cursor: (processing || (paymentMethod === 'cash' && change < 0)) ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              transition: 'all 0.2s',
+              boxShadow: (processing || (paymentMethod === 'cash' && change < 0)) 
+                ? 'none' 
+                : '0 4px 12px rgba(16, 185, 129, 0.3)'
+            }}
+            onMouseEnter={(e) => {
+              if (!processing && !(paymentMethod === 'cash' && change < 0)) {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.4)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!processing && !(paymentMethod === 'cash' && change < 0)) {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
+              }
+            }}
           >
             {processing ? (
               <>
-                <div className="loading"></div>
+                <div style={{
+                  width: '16px',
+                  height: '16px',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderTop: '2px solid white',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite'
+                }}></div>
                 <span>Processing...</span>
               </>
             ) : (
               <>
-                <i className="fas fa-check"></i> Complete Order
+                <i className="fas fa-check-circle"></i>
+                <span>Complete Order</span>
               </>
             )}
           </button>
         </div>
       </div>
+
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };
 
-export default POS;
+export default PaymentModal;

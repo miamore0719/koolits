@@ -785,8 +785,8 @@ const PaymentModal = ({
   ];
 
   return (
-    <div className="modal-overlay active" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay active payment-modal" onClick={onClose}>
+    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>
             <i className="fas fa-cash-register"></i> Payment
@@ -812,11 +812,11 @@ const PaymentModal = ({
                   onClick={() => onPaymentMethodChange(method.id)}
                 >
                   <i className={`fas ${method.icon}`}></i>
-                  <span>{method.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+                      <span>{method.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
           {paymentMethod === 'cash' && (
             <div className="form-group">

@@ -766,7 +766,7 @@ const ProductModal = ({
   );
 };
 
-const CompactPaymentModal = ({
+const PaymentModal = ({
   cartTotal,
   paymentMethod,
   amountPaid,
@@ -777,246 +777,93 @@ const CompactPaymentModal = ({
   onAmountPaidChange,
   onProcessOrder
 }) => {
-
   const paymentMethods = [
-    { id: 'cash', name: 'Cash', icon: '💵' },
-    { id: 'card', name: 'Card', icon: '💳' },
-    { id: 'gcash', name: 'GCash', icon: '📱' },
-    { id: 'paymaya', name: 'Maya', icon: '📲' }
+    { id: 'cash', name: 'Cash', icon: 'fa-money-bill-wave' },
+    { id: 'card', name: 'Card', icon: 'fa-credit-card' },
+    { id: 'gcash', name: 'GCash', icon: 'fa-mobile-alt' },
+    { id: 'paymaya', name: 'PayMaya', icon: 'fa-mobile-alt' }
   ];
 
   return (
-    <div 
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        top: 0, left: 0, right: 0, bottom: 0,
-        background: 'rgba(0, 0, 0, 0.6)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: '10px'
-      }}
-    >
-      <div 
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: 'white',
-          borderRadius: '12px',
-          width: '100%',
-          maxWidth: '400px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
+    <div className="modal-overlay active" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>
+            <i className="fas fa-cash-register"></i> Payment
+          </h2>
+          <button className="modal-close" onClick={onClose}>
+            <i className="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div className="modal-body">
+          <div className="payment-total">
+            <h3>Total Amount</h3>
+            <div className="total-amount">{formatCurrency(cartTotal)}</div>
+          </div>
 
-        {/* HEADER */}
-        <div style={{
-          padding: '12px 16px',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
-          borderRadius: '12px 12px 0 0',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div>
-            <div style={{ fontSize: '11px', opacity: 0.9 }}>Total Amount</div>
-            <div style={{ fontSize: '24px', fontWeight: 700 }}>
-              {formatCurrency(cartTotal)}
+          <div className="form-group">
+            <label>Payment Method</label>
+            <div className="payment-methods">
+              {paymentMethods.map((method) => (
+                <button
+                  key={method.id}
+                  className={`payment-method-btn ${paymentMethod === method.id ? 'active' : ''}`}
+                  onClick={() => onPaymentMethodChange(method.id)}
+                >
+                  <i className={`fas ${method.icon}`}></i>
+                  <span>{method.name}</span>
+                </button>
+              ))}
             </div>
           </div>
 
-          <button 
-            onClick={onClose}
-            style={{
-              background: 'rgba(255,255,255,0.2)',
-              border: 'none',
-              color: 'white',
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              cursor: 'pointer',
-              fontSize: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* BODY */}
-        <div style={{ padding: '16px' }}>
-
-          {/* Payment Methods */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '8px',
-            marginBottom: '12px'
-          }}>
-            {paymentMethods.map((method) => (
-              <button
-                key={method.id}
-                onClick={() => onPaymentMethodChange(method.id)}
-                style={{
-                  padding: '10px 8px',
-                  border: paymentMethod === method.id ? '2px solid #10b981' : '2px solid #e2e8f0',
-                  borderRadius: '8px',
-                  background: paymentMethod === method.id ? '#ecfdf5' : 'white',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '4px',
-                  transition: '0.2s',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: paymentMethod === method.id ? '#10b981' : '#64748b'
-                }}
-              >
-                <span style={{ fontSize: '20px' }}>{method.icon}</span>
-                <span>{method.name}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Amount Paid */}
           {paymentMethod === 'cash' && (
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>
-                Amount Paid
-              </label>
+            <div className="form-group">
+              <label>Amount Paid</label>
               <input
                 type="number"
                 value={amountPaid}
                 onChange={(e) => onAmountPaidChange(e.target.value)}
-                placeholder="Enter cash amount"
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  marginTop: '4px',
-                  borderRadius: '8px',
-                  border: '2px solid #e2e8f0',
-                  fontSize: '14px'
-                }}
+                placeholder="Enter amount"
+                step="0.01"
+                autoFocus
               />
+              {change >= 0 && amountPaid && (
+                <div className="change-display">
+                  Change: {formatCurrency(change)}
+                </div>
+              )}
+              {change < 0 && amountPaid && (
+                <div className="insufficient-payment">
+                  Insufficient: {formatCurrency(Math.abs(change))}
+                </div>
+              )}
             </div>
           )}
+        </div>
 
-          {/* Change / Short */}
-          {amountPaid !== '' && (
-            <div style={{
-              marginTop: '8px',
-              padding: '10px',
-              borderRadius: '8px',
-              background: change >= 0 ? '#ecfdf5' : '#fef2f2',
-              border: `2px solid ${change >= 0 ? '#10b981' : '#ef4444'}`,
-              textAlign: 'center',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <span style={{
-                fontSize: '12px',
-                fontWeight: 600,
-                color: change >= 0 ? '#059669' : '#dc2626'
-              }}>
-                {change >= 0 ? 'Change:' : 'Short:'}
-              </span>
-              <span style={{
-                fontSize: '18px',
-                fontWeight: 700,
-                color: change >= 0 ? '#10b981' : '#ef4444'
-              }}>
-                {formatCurrency(Math.abs(change))}
-              </span>
-            </div>
-          )}
-
-        </div> {/* END BODY */}
-
-        {/* FOOTER */}
-        <div style={{
-          padding: '12px 16px',
-          borderTop: '1px solid #e2e8f0',
-          display: 'flex',
-          gap: '8px'
-        }}>
-          <button 
-            onClick={onClose}
-            disabled={processing}
-            style={{
-              flex: 1,
-              padding: '12px',
-              fontSize: '14px',
-              fontWeight: 600,
-              border: '2px solid #e2e8f0',
-              background: 'white',
-              color: '#64748b',
-              borderRadius: '8px',
-              cursor: processing ? 'not-allowed' : 'pointer',
-              opacity: processing ? 0.5 : 1
-            }}
-          >
+        <div className="modal-footer">
+          <button className="btn btn-secondary" onClick={onClose} disabled={processing}>
             Cancel
           </button>
-
           <button
+            className="btn btn-success"
             onClick={onProcessOrder}
             disabled={processing || (paymentMethod === 'cash' && change < 0)}
-            style={{
-              flex: 2,
-              padding: '12px',
-              fontSize: '14px',
-              fontWeight: 600,
-              border: 'none',
-              background: (processing || (paymentMethod === 'cash' && change < 0))
-                ? '#94a3b8'
-                : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-              color: 'white',
-              borderRadius: '8px',
-              cursor: (processing || (paymentMethod === 'cash' && change < 0)) ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px'
-            }}
           >
             {processing ? (
               <>
-                <div style={{
-                  width: '14px',
-                  height: '14px',
-                  border: '2px solid rgba(255,255,255,0.3)',
-                  borderTop: '2px solid white',
-                  borderRadius: '50%',
-                  animation: 'spin 0.8s linear infinite'
-                }} />
-                Processing...
+                <div className="loading"></div>
+                <span>Processing...</span>
               </>
             ) : (
               <>
-                ✓ Complete Order
+                <i className="fas fa-check"></i> Complete Order
               </>
             )}
           </button>
         </div>
-
-        {/* Loading animation */}
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-
       </div>
     </div>
   );

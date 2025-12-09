@@ -444,7 +444,7 @@
 
 .total-amount {
   font-size: 30px;
-  font-weight: 500;
+  font-weight: 700;
   color: var(--secondary);
 }
 
@@ -572,7 +572,7 @@
 }
 
 .payment-modal .modal-body {
-  padding: 20px;
+  padding: 15px;
 }
 
 .payment-modal .modal-footer {

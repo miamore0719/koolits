@@ -15,13 +15,6 @@
   gap: 20px;
 }
 
-.payment-modal .modal-content {
-  width: 90%;
-  max-width: 450px;
-  max-height: 90vh;
-  overflow-y: auto;
-  border-radius: 12px;
-}
 
 .search-filter-bar {
   display: flex;
@@ -558,4 +551,39 @@
   .products-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* ============================================
+   PAYMENT MODAL - FIXED, SCOPED, CLEAN
+   ONLY AFFECTS: <div class="modal payment-modal">
+   ============================================ */
+.payment-modal .modal-dialog {
+  max-width: 450px !important;   /* ensures width is controlled */
+  margin: 20px auto !important;
+}
+
+.payment-modal .modal-content {
+  width: 100%;
+  max-width: 450px;
+  max-height: 90vh;            /* fits screen height */
+  overflow-y: auto;            /* scrolls inside */
+  border-radius: 12px;
+  padding-bottom: 20px;        /* avoids overlap with footer */
+}
+
+.payment-modal .modal-body {
+  padding: 25px;
+}
+
+.payment-modal .modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Remove Bootstrap modal backdrop copyright overlay */
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.4) !important;
 }

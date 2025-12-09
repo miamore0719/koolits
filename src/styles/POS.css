@@ -429,8 +429,8 @@
 /* ========== Payment Modal ========== */
 .payment-total {
   text-align: center;
-  margin-bottom: 30px;
-  padding: 20px;
+  margin-bottom: 20px;
+  padding: 15px;
   background: linear-gradient(135deg, var(--primary), #1a2834);
   border-radius: 12px;
   color: white;
@@ -443,8 +443,8 @@
 }
 
 .total-amount {
-  font-size: 36px;
-  font-weight: 700;
+  font-size: 30px;
+  font-weight: 500;
   color: var(--secondary);
 }
 
@@ -572,7 +572,7 @@
 }
 
 .payment-modal .modal-body {
-  padding: 25px;
+  padding: 20px;
 }
 
 .payment-modal .modal-footer {

@@ -15,6 +15,14 @@
   gap: 20px;
 }
 
+.payment-modal .modal-content {
+  width: 90%;
+  max-width: 450px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 12px;
+}
+
 .search-filter-bar {
   display: flex;
   gap: 10px;

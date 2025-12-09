@@ -779,9 +779,7 @@ const PaymentModal = ({
 }) => {
   const paymentMethods = [
     { id: 'cash', name: 'Cash', icon: 'fa-money-bill-wave' },
-    { id: 'card', name: 'Card', icon: 'fa-credit-card' },
-    { id: 'gcash', name: 'GCash', icon: 'fa-mobile-alt' },
-    { id: 'paymaya', name: 'PayMaya', icon: 'fa-mobile-alt' }
+    { id: 'gcash', name: 'GCash', icon: 'fa-mobile-alt' }
   ];
 
   return (

@@ -25,117 +25,120 @@ const POS = () => {
   const [amountPaid, setAmountPaid] = useState('');
   const [processingPayment, setProcessingPayment] = useState(false);
   
-  // Orders view with date filtering
-  const [showOrdersView, setShowOrdersView] = useState(false);
-  const [recentOrders, setRecentOrders] = useState([]);
-  const [loadingOrders, setLoadingOrders] = useState(false);
-  const [showDateFilter, setShowDateFilter] = useState(false);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+ // Orders view with date filtering
+const [showOrdersView, setShowOrdersView] = useState(false);
+const [recentOrders, setRecentOrders] = useState([]);
+const [loadingOrders, setLoadingOrders] = useState(false);
+const [showDateFilter, setShowDateFilter] = useState(false);
+const [startDate, setStartDate] = useState('');
+const [endDate, setEndDate] = useState('');
 
-  const user = getUserInfo();
+const user = getUserInfo();
+const isAdmin = user?.role === "admin"; // <<< ONLY ADMINS CAN FILTER
 
-  useEffect(() => {
-    loadProducts();
-  }, []);
+useEffect(() => {
+  loadProducts();
+}, []);
 
-  const loadProducts = async () => {
-    try {
-      setLoading(true);
-      const response = await productAPI.getAll({ status: 'active' });
-      if (response.data.success) {
-        setProducts(response.data.data);
-      }
-    } catch (error) {
-      console.error('Error loading products:', error);
-      alert('Failed to load products');
-    } finally {
-      setLoading(false);
+const loadProducts = async () => {
+  try {
+    setLoading(true);
+    const response = await productAPI.getAll({ status: 'active' });
+    if (response.data.success) {
+      setProducts(response.data.data);
     }
-  };
+  } catch (error) {
+    console.error('Error loading products:', error);
+    alert('Failed to load products');
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const loadRecentOrders = async (useCustomDates = false) => {
-    try {
-      setLoadingOrders(true);
-      const response = await orderAPI.getAll({ limit: 100, sort: '-orderDate' });
+const loadRecentOrders = async (useCustomDates = false) => {
+  try {
+    setLoadingOrders(true);
+    const response = await orderAPI.getAll({ limit: 100, sort: '-orderDate' });
+    
+    if (response.data.success) {
+      let ordersToDisplay = response.data.data;
       
-      if (response.data.success) {
-        let ordersToDisplay = response.data.data;
+      if (useCustomDates && startDate && endDate && isAdmin) {
+        // Admin ONLY: Filter by custom date range
+        const start = new Date(startDate + "T00:00:00");
+        const end = new Date(endDate + "T23:59:59");
+
+        ordersToDisplay = ordersToDisplay.filter(order => {
+          const orderDate = new Date(order.orderDate || order.createdAt);
+          return orderDate >= start && orderDate <= end;
+        });
+
+      } else {
+        // Default: Show only today's latest 5
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
         
-        if (useCustomDates && startDate && endDate) {
-          // Filter by custom date range
-          const start = new Date(startDate);
-          start.setHours(0, 0, 0, 0);
-          const end = new Date(endDate);
-          end.setHours(23, 59, 59, 999);
-          
-          ordersToDisplay = ordersToDisplay.filter(order => {
-            const orderDate = new Date(order.orderDate || order.createdAt);
-            return orderDate >= start && orderDate <= end;
-          });
-        } else {
-          // Default: Show only today's latest 5 orders
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const todayEnd = new Date();
-          todayEnd.setHours(23, 59, 59, 999);
-          
-          ordersToDisplay = ordersToDisplay.filter(order => {
-            const orderDate = new Date(order.orderDate || order.createdAt);
-            return orderDate >= today && orderDate <= todayEnd;
-          });
-          
-          // Take only the latest 5
-          ordersToDisplay = ordersToDisplay.slice(0, 5);
-        }
+        ordersToDisplay = ordersToDisplay.filter(order => {
+          const orderDate = new Date(order.orderDate || order.createdAt);
+          return orderDate >= today && orderDate <= todayEnd;
+        });
         
-        setRecentOrders(ordersToDisplay);
+        ordersToDisplay = ordersToDisplay.slice(0, 5);
       }
-    } catch (error) {
-      console.error('Error loading orders:', error);
-    } finally {
-      setLoadingOrders(false);
+      
+      setRecentOrders(ordersToDisplay);
     }
-  };
+  } catch (error) {
+    console.error('Error loading orders:', error);
+  } finally {
+    setLoadingOrders(false);
+  }
+};
 
-  const handleDateFilterApply = () => {
-    if (!startDate || !endDate) {
-      alert('Please select both start and end dates');
-      return;
-    }
-    
-    if (new Date(startDate) > new Date(endDate)) {
-      alert('Start date must be before end date');
-      return;
-    }
-    
-    loadRecentOrders(true);
-  };
+const handleDateFilterApply = () => {
+  if (!isAdmin) return; // Non-admin cannot apply filter
 
-  const handleDateFilterClear = () => {
-    setStartDate('');
-    setEndDate('');
-    setShowDateFilter(false);
-    loadRecentOrders(false); // Load default (today's latest 5)
-  };
+  if (!startDate || !endDate) {
+    alert('Please select both start and end dates');
+    return;
+  }
+  
+  if (new Date(startDate) > new Date(endDate)) {
+    alert('Start date must be before end date');
+    return;
+  }
+  
+  loadRecentOrders(true);
+};
 
-  const filterProducts = () => {
-    let filtered = products;
-    
-    if (currentCategory !== 'all') {
-      filtered = filtered.filter(p => p.category === currentCategory);
-    }
-    
-    if (searchQuery) {
-      filtered = filtered.filter(p => 
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.flavor?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    return filtered;
-  };
+const handleDateFilterClear = () => {
+  if (!isAdmin) return; // Non-admin cannot clear filter
+
+  setStartDate('');
+  setEndDate('');
+  setShowDateFilter(false);
+  loadRecentOrders(false);
+};
+
+const filterProducts = () => {
+  let filtered = products;
+  
+  if (currentCategory !== 'all') {
+    filtered = filtered.filter(p => p.category === currentCategory);
+  }
+  
+  if (searchQuery) {
+    filtered = filtered.filter(p => 
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.flavor?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
+  
+  return filtered;
+};
 
   const openProductModal = (product) => {
     setSelectedProduct(product);
@@ -391,21 +394,25 @@ const POS = () => {
                     : 'Latest 5 Orders Today'
                   }
                 </h3>
-                <button
-                  className="btn btn-small"
-                  onClick={() => setShowDateFilter(!showDateFilter)}
-                  style={{ 
-                    background: showDateFilter ? '#10b981' : '#6366f1',
-                    color: 'white',
-                    border: 'none',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '13px'
-                  }}
-                >
-                  <i className="fas fa-calendar-alt"></i> {showDateFilter ? 'Hide' : 'Filter'}
-                </button>
+                
+               {user?.role === "admin" && (
+                  <button
+                    className="btn btn-small"
+                    onClick={() => setShowDateFilter(!showDateFilter)}
+                    style={{ 
+                      background: showDateFilter ? '#10b981' : '#6366f1',
+                      color: 'white',
+                      border: 'none',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px'
+                    }}
+                  >
+                    <i className="fas fa-calendar-alt"></i> {showDateFilter ? 'Hide' : 'Filter'}
+                  </button>
+                )}
+
               </div>
 
               {showDateFilter && (
@@ -781,7 +788,6 @@ const PaymentModal = ({
     { id: 'cash', name: 'Cash', icon: 'fa-money-bill-wave' },
     { id: 'gcash', name: 'GCash', icon: 'fa-mobile-alt' }
   ];
-
   return (
     <div className="modal-overlay active payment-modal" onClick={onClose}>
     <div className="modal-content" onClick={(e) => e.stopPropagation()}>

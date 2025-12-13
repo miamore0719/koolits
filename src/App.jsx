@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/UserManagement';
 import ProtectedRoute from './components/ProtectedRoute';
 import { isAuthenticated, getUserRole } from './utils/auth';
+import InventoryManagement from './pages/InventoryManagement';
 
 function App() {
   const isAuth = isAuthenticated();

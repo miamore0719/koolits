@@ -63,7 +63,7 @@ const Layout = ({ children }) => {
 
                   {/* ✅ Inventory Button */}
                   <Link 
-                    to="/inventory" 
+                    to="/admin/inventory" 
                     className="btn btn-secondary btn-small"
                   >
                     <i className="fas fa-warehouse"></i> Inventory

@@ -44,43 +44,54 @@ const Layout = ({ children }) => {
             </div>
           </div>
 
-          <nav style={{ display: 'flex', gap: '10px', marginLeft: '30px' }}>
-            {isAdmin() ? (
-              <>
-                <Link 
-                  to="/dashboard" 
-                  className="btn btn-secondary btn-small"
-                >
-                  <i className="fas fa-chart-line"></i> Dashboard
-                </Link>
-                <Link 
-                  to="/admin" 
-                  className="btn btn-secondary btn-small"
-                >
-                  <i className="fas fa-box"></i> Products
-                </Link>
-                <Link 
-                  to="/users" 
-                  className="btn btn-secondary btn-small"
-                >
-                  <i className="fas fa-users"></i> Users
-                </Link>
+           <nav style={{ display: 'flex', gap: '10px', marginLeft: '30px' }}>
+              {isAdmin() ? (
+                <>
+                  <Link 
+                    to="/dashboard" 
+                    className="btn btn-secondary btn-small"
+                  >
+                    <i className="fas fa-chart-line"></i> Dashboard
+                  </Link>
+
+                  <Link 
+                    to="/admin" 
+                    className="btn btn-secondary btn-small"
+                  >
+                    <i className="fas fa-box"></i> Products
+                  </Link>
+
+                  {/* ✅ Inventory Button */}
+                  <Link 
+                    to="/inventory" 
+                    className="btn btn-secondary btn-small"
+                  >
+                    <i className="fas fa-warehouse"></i> Inventory
+                  </Link>
+
+                  <Link 
+                    to="/users" 
+                    className="btn btn-secondary btn-small"
+                  >
+                    <i className="fas fa-users"></i> Users
+                  </Link>
+
+                  <Link 
+                    to="/pos" 
+                    className="btn btn-info btn-small"
+                  >
+                    <i className="fas fa-cash-register"></i> POS
+                  </Link>
+                </>
+              ) : (
                 <Link 
                   to="/pos" 
-                  className="btn btn-info btn-small"
+                  className="btn btn-secondary btn-small"
                 >
                   <i className="fas fa-cash-register"></i> POS
                 </Link>
-              </>
-            ) : (
-              <Link 
-                to="/pos" 
-                className="btn btn-secondary btn-small"
-              >
-                <i className="fas fa-cash-register"></i> POS
-              </Link>
-            )}
-          </nav>
+              )}
+        </nav>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>

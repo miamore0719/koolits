@@ -129,22 +129,6 @@ const Login = () => {
               )}
             </button>
           </form>
-
-          <div className="demo-accounts">
-            <h4>
-              <i className="fas fa-info-circle"></i> Demo Accounts (First Time Setup)
-            </h4>
-            <div className="demo-account">
-              <strong>Admin:</strong> username: <code>admin</code> / password: <code>admin123</code>
-            </div>
-            <div className="demo-account">
-              <strong>Note:</strong> Run <code>POST /api/auth/setup</code> to create admin account
-            </div>
-          </div>
-        </div>
-
-        <div className="login-footer">
-          <p>&copy; 2025 KoolITs. All rights reserved.</p>
         </div>
       </div>
     </div>

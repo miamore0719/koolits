@@ -49,12 +49,23 @@ function App() {
             </ProtectedRoute>
           } 
         />
+
+      
         
         <Route 
           path="/users" 
           element={
             <ProtectedRoute requiredRole="admin">
               <UserManagement />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/admin/inventory" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <InventoryManagement />
             </ProtectedRoute>
           } 
         />

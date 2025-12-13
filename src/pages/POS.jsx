@@ -32,6 +32,7 @@ const [loadingOrders, setLoadingOrders] = useState(false);
 const [showDateFilter, setShowDateFilter] = useState(false);
 const [startDate, setStartDate] = useState('');
 const [endDate, setEndDate] = useState('');
+const [inventory, setInventory] = useState([]);
 
 const user = getUserInfo();
 const isAdmin = user?.role === "admin"; // <<< ONLY ADMINS CAN FILTER
@@ -40,12 +41,42 @@ useEffect(() => {
   loadProducts();
 }, []);
 
-const loadProducts = async () => {
+/*const loadProducts = async () => {
   try {
     setLoading(true);
     const response = await productAPI.getAll({ status: 'active' });
     if (response.data.success) {
       setProducts(response.data.data);
+    }
+  } catch (error) {
+    console.error('Error loading products:', error);
+    alert('Failed to load products');
+  } finally {
+    setLoading(false);
+  }
+};*/
+
+const loadProducts = async () => {
+  try {
+    setLoading(true);
+    const response = await productAPI.getAll({ status: 'active' });
+    if (response.data.success) {
+      const loadedProducts = response.data.data;
+      setProducts(loadedProducts);
+
+      // Build inventory state from product recipes
+      const initialInventory = {};
+      loadedProducts.forEach(product => {
+        product.sizes.forEach(size => {
+          size.recipe?.forEach(ing => {
+            if (!initialInventory[ing.inventoryItemId]) {
+              initialInventory[ing.inventoryItemId] = ing.currentStock || 0;
+            }
+          });
+        });
+      });
+
+      setInventory(initialInventory);
     }
   } catch (error) {
     console.error('Error loading products:', error);
@@ -173,6 +204,12 @@ const filterProducts = () => {
       alert('Please select a size');
       return;
     }
+
+      const updatedInventory = { ...inventory };
+      selectedSize.recipe?.forEach(ing => {
+        updatedInventory[ing.inventoryItemId] -= ing.quantity * quantity;
+      });
+      setInventory(updatedInventory);
 
     const toppingsTotal = selectedToppings.reduce((sum, t) => sum + t.price, 0);
     const itemPrice = selectedSize.price + toppingsTotal;

@@ -1,5 +1,107 @@
 /* Add these styles to your existing Admin.css */
 
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.admin-container {
+  padding: 30px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.admin-header h1 {
+  font-size: 28px;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 10px 20px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+.filter-btn:hover {
+  border-color: var(--secondary);
+  background: #fef3c7;
+}
+
+.filter-btn.active {
+  background: var(--secondary);
+  border-color: var(--secondary);
+  color: white;
+}
+
+.table-container {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.product-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.product-icon {
+  font-size: 32px;
+}
+
+.product-name {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.size-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  margin: 2px;
+  font-size: 13px;
+}
+
+.modal.large {
+  max-width: 800px;
+}
+
+.size-row {
+  display: grid;
+  grid-template-columns: 1fr 150px 50px;
+  gap: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.size-row input {
+  margin: 0;
+}
+
 /* Size Section with Ingredients */
 .size-section {
   background: #f8fafc;
@@ -8,6 +110,8 @@
   padding: 16px;
   margin-bottom: 16px;
 }
+
+
 
 .size-section:hover {
   border-color: #cbd5e1;

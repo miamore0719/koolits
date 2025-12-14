@@ -4,6 +4,8 @@ import { formatCurrency, getCategoryIcon } from '../utils/helpers';
 import Layout from '../components/Layout';
 import '../styles/Admin.css';
 
+console.log(inventory);
+
 const AdminPanel = () => {
   const [products, setProducts] = useState([]);
   const [inventory, setInventory] = useState([]);

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { productAPI } from '../services/api';
+import { productAPI, inventoryService } from '../services/api';
 import { formatCurrency, getCategoryIcon } from '../utils/helpers';
 import Layout from '../components/Layout';
 import '../styles/Admin.css';
 
 const AdminPanel = () => {
   const [products, setProducts] = useState([]);
+  const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -16,13 +17,18 @@ const AdminPanel = () => {
     category: 'lemonade',
     flavor: '',
     description: '',
-    sizes: [{ size: 'Small', price: 0 }],
+    sizes: [{ 
+      size: 'Small', 
+      price: 0,
+      ingredients: [] // Array of {inventoryItem, quantity, unit}
+    }],
     toppings: [],
     status: 'active'
   });
 
   useEffect(() => {
     loadProducts();
+    loadInventory();
   }, []);
 
   const loadProducts = async () => {
@@ -40,6 +46,21 @@ const AdminPanel = () => {
     }
   };
 
+  const loadInventory = async () => {
+    try {
+      const response = await inventoryService.getAll();
+      if (response.success) {
+        // Filter only ingredients
+        const ingredients = response.data.filter(item => 
+          item.category === 'ingredient' && item.status === 'active'
+        );
+        setInventory(ingredients);
+      }
+    } catch (error) {
+      console.error('Error loading inventory:', error);
+    }
+  };
+
   const openAddModal = () => {
     setEditingProduct(null);
     setFormData({
@@ -47,7 +68,11 @@ const AdminPanel = () => {
       category: 'lemonade',
       flavor: '',
       description: '',
-      sizes: [{ size: 'Small', price: 0 }],
+      sizes: [{ 
+        size: 'Small', 
+        price: 0,
+        ingredients: []
+      }],
       toppings: [],
       status: 'active'
     });
@@ -61,7 +86,10 @@ const AdminPanel = () => {
       category: product.category,
       flavor: product.flavor || '',
       description: product.description || '',
-      sizes: product.sizes,
+      sizes: product.sizes.map(size => ({
+        ...size,
+        ingredients: size.ingredients || []
+      })),
       toppings: product.toppings || [],
       status: product.status
     });
@@ -100,10 +128,15 @@ const AdminPanel = () => {
     }
   };
 
+  // Size management
   const addSize = () => {
     setFormData({
       ...formData,
-      sizes: [...formData.sizes, { size: '', price: 0 }]
+      sizes: [...formData.sizes, { 
+        size: '', 
+        price: 0,
+        ingredients: []
+      }]
     });
   };
 
@@ -120,6 +153,49 @@ const AdminPanel = () => {
     setFormData({ ...formData, sizes: newSizes });
   };
 
+  // Ingredient management for each size
+  const addIngredientToSize = (sizeIndex) => {
+    const newSizes = [...formData.sizes];
+    if (!newSizes[sizeIndex].ingredients) {
+      newSizes[sizeIndex].ingredients = [];
+    }
+    newSizes[sizeIndex].ingredients.push({
+      inventoryItem: '',
+      quantity: 0,
+      unit: ''
+    });
+    setFormData({ ...formData, sizes: newSizes });
+  };
+
+  const removeIngredientFromSize = (sizeIndex, ingredientIndex) => {
+    const newSizes = [...formData.sizes];
+    newSizes[sizeIndex].ingredients = newSizes[sizeIndex].ingredients.filter(
+      (_, i) => i !== ingredientIndex
+    );
+    setFormData({ ...formData, sizes: newSizes });
+  };
+
+  const updateIngredient = (sizeIndex, ingredientIndex, field, value) => {
+    const newSizes = [...formData.sizes];
+    const ingredient = newSizes[sizeIndex].ingredients[ingredientIndex];
+    
+    if (field === 'inventoryItem') {
+      ingredient.inventoryItem = value;
+      // Auto-fill unit from inventory
+      const selectedInventory = inventory.find(inv => inv._id === value);
+      if (selectedInventory) {
+        ingredient.unit = selectedInventory.unit;
+      }
+    } else if (field === 'quantity') {
+      ingredient.quantity = parseFloat(value) || 0;
+    } else {
+      ingredient[field] = value;
+    }
+    
+    setFormData({ ...formData, sizes: newSizes });
+  };
+
+  // Topping management
   const addTopping = () => {
     setFormData({
       ...formData,
@@ -175,6 +251,7 @@ const AdminPanel = () => {
                 <th>Product</th>
                 <th>Category</th>
                 <th>Sizes & Prices</th>
+                <th>Ingredients</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -182,11 +259,11 @@ const AdminPanel = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="text-center">Loading...</td>
+                  <td colSpan="6" className="text-center">Loading...</td>
                 </tr>
               ) : filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan="5">
+                  <td colSpan="6">
                     <div className="empty-state">
                       <i className="fas fa-inbox"></i>
                       <p>No products found</p>
@@ -214,6 +291,17 @@ const AdminPanel = () => {
                           {s.size}: {formatCurrency(s.price)}
                         </div>
                       ))}
+                    </td>
+                    <td>
+                      {product.sizes.some(s => s.ingredients && s.ingredients.length > 0) ? (
+                        <span className="badge badge-success">
+                          <i className="fas fa-check"></i> Mapped
+                        </span>
+                      ) : (
+                        <span className="badge badge-warning">
+                          <i className="fas fa-exclamation"></i> Not Mapped
+                        </span>
+                      )}
                     </td>
                     <td>
                       <span className={`badge badge-${product.status === 'active' ? 'success' : 'danger'}`}>
@@ -256,6 +344,7 @@ const AdminPanel = () => {
 
               <form onSubmit={handleSubmit}>
                 <div className="modal-body">
+                  {/* Basic Info */}
                   <div className="form-row">
                     <div className="form-group">
                       <label>Product Name *</label>
@@ -310,41 +399,112 @@ const AdminPanel = () => {
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      rows="3"
+                      rows="2"
                     />
                   </div>
 
-                  {/* Sizes */}
+                  {/* Sizes with Ingredients */}
                   <div className="form-group">
-                    <label>Sizes & Prices *</label>
-                    {formData.sizes.map((size, index) => (
-                      <div key={index} className="size-row">
-                        <input
-                          type="text"
-                          placeholder="Size (e.g., Small, Medium)"
-                          value={size.size}
-                          onChange={(e) => updateSize(index, 'size', e.target.value)}
-                          required
-                        />
-                        <input
-                          type="number"
-                          placeholder="Price"
-                          value={size.price}
-                          onChange={(e) => updateSize(index, 'price', e.target.value)}
-                          step="0.01"
-                          required
-                        />
-                        {formData.sizes.length > 1 && (
+                    <label>Sizes, Prices & Ingredients *</label>
+                    {formData.sizes.map((size, sizeIndex) => (
+                      <div key={sizeIndex} className="size-section">
+                        {/* Size Name and Price */}
+                        <div className="size-row">
+                          <input
+                            type="text"
+                            placeholder="Size (e.g., Small, Medium)"
+                            value={size.size}
+                            onChange={(e) => updateSize(sizeIndex, 'size', e.target.value)}
+                            required
+                            style={{ flex: 2 }}
+                          />
+                          <input
+                            type="number"
+                            placeholder="Price"
+                            value={size.price}
+                            onChange={(e) => updateSize(sizeIndex, 'price', e.target.value)}
+                            step="0.01"
+                            required
+                            style={{ flex: 1 }}
+                          />
+                          {formData.sizes.length > 1 && (
+                            <button
+                              type="button"
+                              className="btn btn-danger btn-small"
+                              onClick={() => removeSize(sizeIndex)}
+                            >
+                              <i className="fas fa-trash"></i>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Ingredients for this size */}
+                        <div className="ingredients-section">
+                          <label className="ingredients-label">
+                            <i className="fas fa-flask"></i> Ingredients for {size.size || 'this size'}
+                          </label>
+                          
+                          {size.ingredients && size.ingredients.length > 0 && (
+                            <div className="ingredients-list">
+                              {size.ingredients.map((ingredient, ingredientIndex) => (
+                                <div key={ingredientIndex} className="ingredient-row">
+                                  <select
+                                    value={ingredient.inventoryItem}
+                                    onChange={(e) => updateIngredient(sizeIndex, ingredientIndex, 'inventoryItem', e.target.value)}
+                                    required
+                                    style={{ flex: 2 }}
+                                  >
+                                    <option value="">Select Ingredient</option>
+                                    {inventory.map(item => (
+                                      <option key={item._id} value={item._id}>
+                                        {item.name} ({item.quantity} {item.unit} available)
+                                      </option>
+                                    ))}
+                                  </select>
+                                  
+                                  <input
+                                    type="number"
+                                    placeholder="Qty"
+                                    value={ingredient.quantity}
+                                    onChange={(e) => updateIngredient(sizeIndex, ingredientIndex, 'quantity', e.target.value)}
+                                    step="0.01"
+                                    required
+                                    style={{ flex: 1 }}
+                                  />
+                                  
+                                  <input
+                                    type="text"
+                                    placeholder="Unit"
+                                    value={ingredient.unit}
+                                    onChange={(e) => updateIngredient(sizeIndex, ingredientIndex, 'unit', e.target.value)}
+                                    readOnly
+                                    style={{ flex: 1, background: '#f3f4f6' }}
+                                  />
+                                  
+                                  <button
+                                    type="button"
+                                    className="btn btn-danger btn-small"
+                                    onClick={() => removeIngredientFromSize(sizeIndex, ingredientIndex)}
+                                  >
+                                    <i className="fas fa-times"></i>
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
                           <button
                             type="button"
-                            className="btn btn-danger btn-small"
-                            onClick={() => removeSize(index)}
+                            className="btn btn-secondary btn-small"
+                            onClick={() => addIngredientToSize(sizeIndex)}
+                            style={{ marginTop: '8px' }}
                           >
-                            <i className="fas fa-trash"></i>
+                            <i className="fas fa-plus"></i> Add Ingredient
                           </button>
-                        )}
+                        </div>
                       </div>
                     ))}
+                    
                     <button type="button" className="btn btn-secondary btn-small" onClick={addSize}>
                       <i className="fas fa-plus"></i> Add Size
                     </button>

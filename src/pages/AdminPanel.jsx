@@ -49,21 +49,32 @@ console.log(inventory);
     }
   };
 
-const loadInventory = async () => {
-  try {
-    const response = await inventoryAPI.getAll();
-
-    console.log('RAW INVENTORY:', response.data);
-
-    if (response.success) {
-      setInventory(
-        response.data.filter(item => item.status === 'in-stock')
-      );
+ const loadInventory = async () => {
+    try {
+      const response = await inventoryAPI.getAll();
+      
+      console.log('RAW INVENTORY RESPONSE:', response);
+      
+      // Fixed: Check if response.data exists and is an array
+      if (response.data) {
+        const inventoryData = Array.isArray(response.data) ? response.data : 
+                             (response.data.data ? response.data.data : []);
+        
+        // Filter for in-stock items
+        const inStockItems = inventoryData.filter(item => item.status === 'in-stock');
+        
+        console.log('FILTERED INVENTORY:', inStockItems);
+        setInventory(inStockItems);
+      } else {
+        console.warn('No inventory data found');
+        setInventory([]);
+      }
+    } catch (error) {
+      console.error('Error loading inventory:', error);
+      alert('Failed to load inventory. Please check the console for details.');
+      setInventory([]);
     }
-  } catch (error) {
-    console.error('Error loading inventory:', error);
-  }
-};
+  };
 
   const openAddModal = () => {
     setEditingProduct(null);

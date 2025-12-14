@@ -4,7 +4,7 @@ import { formatCurrency, getCategoryIcon } from '../utils/helpers';
 import Layout from '../components/Layout';
 import '../styles/Admin.css';
 
-console.log(inventory);
+
 
 const AdminPanel = () => {
   const [products, setProducts] = useState([]);
@@ -32,7 +32,8 @@ const AdminPanel = () => {
     loadProducts();
     loadInventory();
   }, []);
-
+  
+console.log(inventory);
   const loadProducts = async () => {
     try {
       setLoading(true);

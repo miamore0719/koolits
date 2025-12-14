@@ -76,6 +76,20 @@ export const orderAPI = {
 // ==================== INVENTORY ENDPOINTS ====================
 
 export const inventoryAPI = {
+  getAll: async (params) => {
+    const res = await api.get('/inventory', { params });
+
+    const raw = res.data?.data || res.data;
+
+    return {
+      success: true,
+      data: raw.map(item => ({
+        ...item,
+        _id: typeof item._id === 'object' ? item._id.$oid : item._id
+      }))
+    };
+  },
+  
   getAll: (params) => api.get('/inventory', { params }),
   getById: (id) => api.get(`/inventory/${id}`),
   getByProduct: (productId) => api.get(`/inventory/product/${productId}`),

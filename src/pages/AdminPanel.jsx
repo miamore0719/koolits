@@ -32,7 +32,7 @@ const AdminPanel = () => {
     loadProducts();
     loadInventory();
   }, []);
-  
+
 console.log(inventory);
   const loadProducts = async () => {
     try {
@@ -53,16 +53,11 @@ const loadInventory = async () => {
   try {
     const response = await inventoryAPI.getAll();
 
-    console.log('RAW INVENTORY RESPONSE:', response.data);
-
-    const normalized = response.data.map(item => ({
-      ...item,
-      _id: item._id?.$oid || item._id
-    }));
-
-    console.log('NORMALIZED INVENTORY:', normalized);
-
-    setInventory(normalized);
+    if (response.success) {
+      setInventory(
+        response.data.filter(item => item.status === 'in-stock')
+      );
+    }
   } catch (error) {
     console.error('Error loading inventory:', error);
   }

@@ -50,11 +50,7 @@ const loadInventory = async () => {
   try {
     const response = await inventoryAPI.getAll();
     if (response.data) {
-      const normalized = response.data.map(item => ({
-        ...item,
-        _id: item._id?.$oid || item._id
-      }));
-      setInventory(normalized);
+      setInventory(response.data); // NO FILTER
     }
   } catch (error) {
     console.error('Error loading inventory:', error);

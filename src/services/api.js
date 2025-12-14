@@ -76,9 +76,9 @@ export const orderAPI = {
 // ==================== INVENTORY ENDPOINTS ====================
 
 export const inventoryAPI = {
+  // REMOVE the duplicate! Keep only this one:
   getAll: async (params) => {
     const res = await api.get('/inventory', { params });
-
     const raw = res.data?.data || res.data;
 
     return {
@@ -90,7 +90,9 @@ export const inventoryAPI = {
     };
   },
   
-  getAll: (params) => api.get('/inventory', { params }),
+  // DELETE THIS DUPLICATE LINE:
+  // getAll: (params) => api.get('/inventory', { params }),
+  
   getById: (id) => api.get(`/inventory/${id}`),
   getByProduct: (productId) => api.get(`/inventory/product/${productId}`),
   create: (itemData) => api.post('/inventory', itemData),

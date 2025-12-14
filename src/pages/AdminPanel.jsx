@@ -53,6 +53,8 @@ const loadInventory = async () => {
   try {
     const response = await inventoryAPI.getAll();
 
+    console.log('RAW INVENTORY:', response.data);
+
     if (response.success) {
       setInventory(
         response.data.filter(item => item.status === 'in-stock')

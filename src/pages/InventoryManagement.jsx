@@ -45,7 +45,7 @@ const InventoryManagement = () => {
     if (isAdmin) loadData();
   }, [isAdmin]);
 
-   const loadData = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
       const [invRes, prodRes] = await Promise.all([
@@ -53,11 +53,30 @@ const InventoryManagement = () => {
         productAPI.getAll()
       ]);
 
-      if (invRes.data.success) setInventories(invRes.data.data || []);
-      if (prodRes.data.success) setProducts(prodRes.data.data || []);
+      console.log('RAW Inventory Response:', invRes);
+      console.log('RAW Products Response:', prodRes);
+
+      // The custom getAll returns { success: true, data: [...] }
+      if (invRes && invRes.success && Array.isArray(invRes.data)) {
+        console.log('Setting inventories from custom getAll:', invRes.data);
+        setInventories(invRes.data);
+      } else {
+        console.warn('Unexpected inventory response structure:', invRes);
+        setInventories([]);
+      }
+
+      // Handle products response
+      if (prodRes.data) {
+        if (prodRes.data.success) {
+          setProducts(prodRes.data.data || []);
+        } else if (Array.isArray(prodRes.data)) {
+          setProducts(prodRes.data);
+        }
+      }
     } catch (err) {
       console.error('Error loading data:', err);
-      alert('Failed to load data');
+      console.error('Error details:', err.response);
+      alert('Failed to load data: ' + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }
@@ -68,7 +87,6 @@ const InventoryManagement = () => {
 
     products.forEach(p => {
       p.sizes?.forEach(s => {
-        // Check both old structure (recipe) and new structure (ingredients)
         const ingredients = s.recipe || s.ingredients || [];
         ingredients.forEach(ing => {
           const itemId = ing.inventoryItemId || ing.inventoryItem;
@@ -89,7 +107,6 @@ const InventoryManagement = () => {
     return { text: 'Normal', color: '#64748b' };
   };
 
-  // Modal handlers
   const openAddModal = () => {
     setFormData({
       name: '',
@@ -119,7 +136,7 @@ const InventoryManagement = () => {
       costPrice: item.costPrice || 0,
       sellingPrice: item.sellingPrice || 0,
       status: item.status,
-      alertEnabled: item.alertEnabled,
+      alertEnabled: item.alertEnabled !== false,
       notes: item.notes || ''
     });
     setShowEditModal(true);
@@ -171,40 +188,85 @@ const InventoryManagement = () => {
   };
 
   const handleUpdate = async () => {
+    if (!formData.name.trim()) {
+      alert('Please enter item name');
+      return;
+    }
+
     try {
+      console.log('Updating inventory:', selectedItem._id, formData);
+      
       const response = await inventoryAPI.update(selectedItem._id, formData);
-      if (response.data.success) {
+      
+      console.log('Update response:', response);
+      
+      const success = response.data?.success !== false;
+      
+      if (success) {
         alert('Inventory item updated successfully!');
         setShowEditModal(false);
-        loadData();
+        await loadData();
+      } else {
+        throw new Error(response.data?.message || 'Failed to update item');
       }
     } catch (error) {
       console.error('Error updating item:', error);
-      alert('Failed to update inventory item');
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error ||
+                          error.message || 
+                          'Failed to update inventory item';
+      alert('Error: ' + errorMessage);
     }
   };
 
   const handleRestock = async () => {
-    if (restockData.quantity <= 0) {
+    const quantity = parseFloat(restockData.quantity);
+    
+    if (!quantity || quantity <= 0) {
       alert('Please enter a valid quantity');
       return;
     }
 
     try {
-      const newStock = selectedItem.currentStock + parseFloat(restockData.quantity);
-      const response = await inventoryAPI.update(selectedItem._id, {
-        currentStock: newStock,
-        notes: restockData.notes || `Restocked ${restockData.quantity} ${selectedItem.unit}`
-      });
+      const newStock = selectedItem.currentStock + quantity;
       
-      if (response.data.success) {
-        alert('Inventory restocked successfully!');
+      // Use the existing item data, only update the stock
+      const updateData = {
+        name: selectedItem.name,
+        category: selectedItem.category,
+        currentStock: newStock,
+        minStockLevel: selectedItem.minStockLevel,
+        maxStockLevel: selectedItem.maxStockLevel,
+        unit: selectedItem.unit,
+        costPrice: selectedItem.costPrice || 0,
+        sellingPrice: selectedItem.sellingPrice || 0,
+        status: selectedItem.status || 'in-stock',
+        alertEnabled: selectedItem.alertEnabled !== false,
+        notes: restockData.notes || selectedItem.notes || `Restocked ${quantity} ${selectedItem.unit}`
+      };
+      
+      console.log('Restocking with data:', updateData);
+      
+      const response = await inventoryAPI.update(selectedItem._id, updateData);
+      
+      console.log('Restock response:', response);
+      
+      const success = response.data?.success !== false;
+      
+      if (success) {
+        alert(`Successfully restocked ${quantity} ${selectedItem.unit}!`);
         setShowRestockModal(false);
-        loadData();
+        await loadData();
+      } else {
+        throw new Error(response.data?.message || 'Failed to restock');
       }
     } catch (error) {
       console.error('Error restocking:', error);
-      alert('Failed to restock inventory');
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error ||
+                          error.message || 
+                          'Failed to restock inventory';
+      alert('Error: ' + errorMessage);
     }
   };
 
@@ -221,14 +283,27 @@ const InventoryManagement = () => {
     }
 
     try {
+      console.log('Deleting inventory:', item._id);
+      
       const response = await inventoryAPI.delete(item._id);
-      if (response.data.success) {
+      
+      console.log('Delete response:', response);
+      
+      const success = response.data?.success !== false;
+      
+      if (success) {
         alert('Inventory item deleted successfully!');
-        loadData();
+        await loadData();
+      } else {
+        throw new Error(response.data?.message || 'Failed to delete');
       }
     } catch (error) {
       console.error('Error deleting item:', error);
-      alert('Failed to delete inventory item');
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error ||
+                          error.message || 
+                          'Failed to delete inventory item';
+      alert('Error: ' + errorMessage);
     }
   };
 
@@ -498,11 +573,10 @@ const InventoryModal = ({ title, formData, setFormData, onClose, onSubmit, isEdi
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-   const handleSubmitForm = (e) => {
+  const handleSubmitForm = (e) => {
     e.preventDefault();
     onSubmit();
   };
-
 
   return (
     <div className="modal-overlay active" onClick={onClose}>
@@ -522,6 +596,7 @@ const InventoryModal = ({ title, formData, setFormData, onClose, onSubmit, isEdi
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleChange('name', e.target.value)}
+                placeholder="e.g., Lemon Juice"
                 required
               />
             </div>
@@ -547,6 +622,7 @@ const InventoryModal = ({ title, formData, setFormData, onClose, onSubmit, isEdi
                 onChange={(e) => handleChange('currentStock', parseFloat(e.target.value) || 0)}
                 min="0"
                 step="0.1"
+                placeholder="0"
               />
             </div>
 
@@ -573,6 +649,7 @@ const InventoryModal = ({ title, formData, setFormData, onClose, onSubmit, isEdi
                 value={formData.minStockLevel}
                 onChange={(e) => handleChange('minStockLevel', parseFloat(e.target.value) || 0)}
                 min="0"
+                placeholder="10"
               />
             </div>
 
@@ -583,6 +660,7 @@ const InventoryModal = ({ title, formData, setFormData, onClose, onSubmit, isEdi
                 value={formData.maxStockLevel}
                 onChange={(e) => handleChange('maxStockLevel', parseFloat(e.target.value) || 0)}
                 min="0"
+                placeholder="100"
               />
             </div>
 
@@ -594,6 +672,7 @@ const InventoryModal = ({ title, formData, setFormData, onClose, onSubmit, isEdi
                 onChange={(e) => handleChange('costPrice', parseFloat(e.target.value) || 0)}
                 min="0"
                 step="0.01"
+                placeholder="0.00"
               />
             </div>
 
@@ -605,6 +684,7 @@ const InventoryModal = ({ title, formData, setFormData, onClose, onSubmit, isEdi
                 onChange={(e) => handleChange('sellingPrice', parseFloat(e.target.value) || 0)}
                 min="0"
                 step="0.01"
+                placeholder="0.00"
               />
             </div>
 
@@ -614,17 +694,17 @@ const InventoryModal = ({ title, formData, setFormData, onClose, onSubmit, isEdi
                 value={formData.notes}
                 onChange={(e) => handleChange('notes', e.target.value)}
                 rows="3"
+                placeholder="Additional information about this item..."
               />
             </div>
           </div>
         </div>
 
         <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onClose}>
+          <button type="button" className="btn btn-secondary" onClick={onClose}>
             Cancel
           </button>
-
-         <button type="button" className="btn btn-primary" onClick={handleSubmitForm}>
+          <button type="button" className="btn btn-primary" onClick={handleSubmitForm}>
             <i className="fas fa-save"></i> {isEdit ? 'Update' : 'Add'} Item
           </button>
         </div>

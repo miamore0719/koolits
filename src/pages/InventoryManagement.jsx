@@ -45,7 +45,7 @@ const InventoryManagement = () => {
     if (isAdmin) loadData();
   }, [isAdmin]);
 
-  const loadData = async () => {
+   const loadData = async () => {
     try {
       setLoading(true);
       const [invRes, prodRes] = await Promise.all([
@@ -132,16 +132,41 @@ const InventoryManagement = () => {
   };
 
   const handleAdd = async () => {
+    // Validation
+    if (!formData.name.trim()) {
+      alert('Please enter item name');
+      return;
+    }
+
+    if (formData.currentStock < 0) {
+      alert('Stock cannot be negative');
+      return;
+    }
+
     try {
+      console.log('Adding inventory with data:', formData);
+      
       const response = await inventoryAPI.create(formData);
-      if (response.data.success) {
+      
+      console.log('Add inventory response:', response);
+      
+      // Handle different response structures
+      const success = response.data?.success !== false;
+      
+      if (success) {
         alert('Inventory item added successfully!');
         setShowAddModal(false);
-        loadData();
+        await loadData();
+      } else {
+        throw new Error(response.data?.message || 'Failed to add item');
       }
     } catch (error) {
       console.error('Error adding item:', error);
-      alert('Failed to add inventory item');
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error ||
+                          error.message || 
+                          'Failed to add inventory item';
+      alert('Error: ' + errorMessage);
     }
   };
 
@@ -473,6 +498,12 @@ const InventoryModal = ({ title, formData, setFormData, onClose, onSubmit, isEdi
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+   const handleSubmitForm = (e) => {
+    e.preventDefault();
+    onSubmit();
+  };
+
+
   return (
     <div className="modal-overlay active" onClick={onClose}>
       <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
@@ -592,7 +623,8 @@ const InventoryModal = ({ title, formData, setFormData, onClose, onSubmit, isEdi
           <button className="btn btn-secondary" onClick={onClose}>
             Cancel
           </button>
-          <button className="btn btn-primary" onClick={onSubmit}>
+
+         <button type="button" className="btn btn-primary" onClick={handleSubmitForm}>
             <i className="fas fa-save"></i> {isEdit ? 'Update' : 'Add'} Item
           </button>
         </div>

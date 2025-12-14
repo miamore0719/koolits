@@ -46,14 +46,15 @@ const AdminPanel = () => {
     }
   };
 
-  const loadInventory = async () => {
+const loadInventory = async () => {
   try {
     const response = await inventoryAPI.getAll();
-    if (response.data.success) {
-      const ingredients = response.data.data.filter(item =>
-        item.category === 'ingredient' && item.status === 'active'
-      );
-      setInventory(ingredients);
+    if (response.data) {
+      const normalized = response.data.map(item => ({
+        ...item,
+        _id: item._id?.$oid || item._id
+      }));
+      setInventory(normalized);
     }
   } catch (error) {
     console.error('Error loading inventory:', error);

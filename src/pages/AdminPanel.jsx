@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { productAPI, inventoryService } from '../services/api';
+import { productAPI, inventoryAPI } from '../services/api';
 import { formatCurrency, getCategoryIcon } from '../utils/helpers';
 import Layout from '../components/Layout';
 import '../styles/Admin.css';
@@ -47,19 +47,18 @@ const AdminPanel = () => {
   };
 
   const loadInventory = async () => {
-    try {
-      const response = await inventoryService.getAll();
-      if (response.success) {
-        // Filter only ingredients
-        const ingredients = response.data.filter(item => 
-          item.category === 'ingredient' && item.status === 'active'
-        );
-        setInventory(ingredients);
-      }
-    } catch (error) {
-      console.error('Error loading inventory:', error);
+  try {
+    const response = await inventoryAPI.getAll();
+    if (response.data.success) {
+      const ingredients = response.data.data.filter(item =>
+        item.category === 'ingredient' && item.status === 'active'
+      );
+      setInventory(ingredients);
     }
-  };
+  } catch (error) {
+    console.error('Error loading inventory:', error);
+  }
+};
 
   const openAddModal = () => {
     setEditingProduct(null);

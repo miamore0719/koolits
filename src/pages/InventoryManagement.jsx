@@ -150,7 +150,7 @@ const InventoryManagement = () => {
 
   const handleAdd = async () => {
     // Validation
-    if (!formData.name.trim()) {
+    if (!formData.name || !formData.name.trim()) {
       alert('Please enter item name');
       return;
     }
@@ -188,7 +188,7 @@ const InventoryManagement = () => {
   };
 
   const handleUpdate = async () => {
-    if (!formData.name.trim()) {
+    if (!formData.name || !formData.name.trim()) {
       alert('Please enter item name');
       return;
     }
@@ -220,29 +220,28 @@ const InventoryManagement = () => {
   };
 
   const handleRestock = async () => {
-    const quantity = parseFloat(restockData.quantity);
+    const qty = parseFloat(restockData.quantity);
     
-    if (!quantity || quantity <= 0) {
+    if (!qty || qty <= 0) {
       alert('Please enter a valid quantity');
       return;
     }
 
     try {
-      const newStock = selectedItem.currentStock + quantity;
+      const newStock = (selectedItem.quantity || selectedItem.currentStock || 0) + qty;
       
       // Use the existing item data, only update the stock
       const updateData = {
-        name: selectedItem.name,
+        productName: selectedItem.productName || selectedItem.name,
         category: selectedItem.category,
-        currentStock: newStock,
-        minStockLevel: selectedItem.minStockLevel,
-        maxStockLevel: selectedItem.maxStockLevel,
+        quantity: newStock,
         unit: selectedItem.unit,
-        costPrice: selectedItem.costPrice || 0,
-        sellingPrice: selectedItem.sellingPrice || 0,
+        minStock: selectedItem.minStock || selectedItem.minStockLevel || 10,
+        reorderLevel: selectedItem.reorderLevel || selectedItem.minStockLevel || 10,
+        supplier: selectedItem.supplier || '',
+        cost: selectedItem.cost || selectedItem.costPrice || 0,
         status: selectedItem.status || 'in-stock',
-        alertEnabled: selectedItem.alertEnabled !== false,
-        notes: restockData.notes || selectedItem.notes || `Restocked ${quantity} ${selectedItem.unit}`
+        notes: restockData.notes || selectedItem.notes || `Restocked ${qty} ${selectedItem.unit}`
       };
       
       console.log('Restocking with data:', updateData);
@@ -254,7 +253,7 @@ const InventoryManagement = () => {
       const success = response.data?.success !== false;
       
       if (success) {
-        alert(`Successfully restocked ${quantity} ${selectedItem.unit}!`);
+        alert(`Successfully restocked ${qty} ${selectedItem.unit}!`);
         setShowRestockModal(false);
         await loadData();
       } else {

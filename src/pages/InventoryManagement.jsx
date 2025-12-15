@@ -161,9 +161,15 @@ const InventoryManagement = () => {
     }
 
     try {
-      console.log('Adding inventory with data:', formData);
+      // Transform data: send 'productName' to backend but keep 'name' for frontend compatibility
+      const dataToSend = {
+        ...formData,
+        productName: formData.name // Backend expects productName
+      };
       
-      const response = await inventoryAPI.create(formData);
+      console.log('Adding inventory with data:', dataToSend);
+      
+      const response = await inventoryAPI.create(dataToSend);
       
       console.log('Add inventory response:', response);
       

@@ -231,17 +231,18 @@ const InventoryManagement = () => {
       const newStock = (selectedItem.quantity || selectedItem.currentStock || 0) + qty;
       
       // Use the existing item data, only update the stock
-      const updateData = {
-        productName: selectedItem.productName || selectedItem.name,
+    const updateData = {
+        name: selectedItem.name,
         category: selectedItem.category,
-        quantity: newStock,
+        currentStock: newStock,
+        minStockLevel: selectedItem.minStockLevel,
+        maxStockLevel: selectedItem.maxStockLevel,
         unit: selectedItem.unit,
-        minStock: selectedItem.minStock || selectedItem.minStockLevel || 10,
-        reorderLevel: selectedItem.reorderLevel || selectedItem.minStockLevel || 10,
-        supplier: selectedItem.supplier || '',
-        cost: selectedItem.cost || selectedItem.costPrice || 0,
-        status: selectedItem.status || 'in-stock',
-        notes: restockData.notes || selectedItem.notes || `Restocked ${qty} ${selectedItem.unit}`
+        costPrice: selectedItem.costPrice || 0,
+        sellingPrice: selectedItem.sellingPrice || 0,
+        status: 'in-stock',
+        alertEnabled: selectedItem.alertEnabled !== false,
+        notes: restockData.notes || `Restocked ${qty} ${selectedItem.unit}`
       };
       
       console.log('Restocking with data:', updateData);

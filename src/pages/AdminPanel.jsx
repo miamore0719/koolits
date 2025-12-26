@@ -93,7 +93,14 @@ console.log(inventory);
 
  const openEditModal = (product) => {
   setEditingProduct(product);
+  const openEditModal = (product) => {
+  console.log('EDIT PRODUCT FULL:', product);
+  console.log('SIZES:', product.sizes);
+  console.log('INGREDIENTS PER SIZE:', product.sizes.map(s => s.ingredients));
 
+  setEditingProduct(product);
+
+};
   setFormData({
     name: product.name,
     category: product.category,
@@ -116,7 +123,12 @@ console.log(inventory);
     })),
     toppings: product.toppings || [],
     status: product.status
-  });
+
+    
+  }
+  
+
+  );
 
   setShowModal(true);
 };

@@ -91,22 +91,35 @@ console.log(inventory);
     setShowModal(true);
   };
 
-  const openEditModal = (product) => {
-    setEditingProduct(product);
-    setFormData({
-      name: product.name,
-      category: product.category,
-      flavor: product.flavor || '',
-      description: product.description || '',
-      sizes: product.sizes.map(size => ({
-        ...size,
-        ingredients: size.ingredients || []
-      })),
-      toppings: product.toppings || [],
-      status: product.status
-    });
-    setShowModal(true);
-  };
+ const openEditModal = (product) => {
+  setEditingProduct(product);
+
+  setFormData({
+    name: product.name,
+    category: product.category,
+    flavor: product.flavor || '',
+    description: product.description || '',
+    sizes: product.sizes.map(size => ({
+      size: size.size,
+      price: size.price,
+      ingredients: (size.ingredients || []).map(ing => ({
+        inventoryItem:
+          ing.inventoryItem?._id ||   // if populated
+          ing.inventoryItem ||        // if already an ID
+          ing.inventoryItemId || '',  // fallback
+        quantity: ing.quantity || 0,
+        unit:
+          ing.unit ||
+          ing.inventoryItem?.unit ||
+          ''
+      }))
+    })),
+    toppings: product.toppings || [],
+    status: product.status
+  });
+
+  setShowModal(true);
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();

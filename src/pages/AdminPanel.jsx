@@ -94,9 +94,13 @@ console.log(inventory);
  const openEditModal = (product) => {
   setEditingProduct(product);
   const openEditModal = (product) => {
-  console.log('EDIT PRODUCT FULL:', product);
-  console.log('SIZES:', product.sizes);
-  console.log('INGREDIENTS PER SIZE:', product.sizes.map(s => s.ingredients));
+  console.log(
+  product.sizes.map(s => ({
+    size: s.size,
+    hasIngredientsField: 'ingredients' in s,
+    ingredientsValue: s.ingredients
+  }))
+);
 
   setEditingProduct(product);
 

@@ -49,19 +49,16 @@ console.log(inventory);
     }
   };
 
- const loadInventory = async () => {
+  const loadInventory = async () => {
     try {
       const response = await inventoryAPI.getAll();
       
       console.log('RAW INVENTORY RESPONSE:', response);
       
-      // Fixed: Check if response.data exists and is an array
-      if (response.data) {
-        const inventoryData = Array.isArray(response.data) ? response.data : 
-                             (response.data.data ? response.data.data : []);
-        
+      // The custom getAll returns { success: true, data: [...] }
+      if (response && response.success && Array.isArray(response.data)) {
         // Filter for in-stock items
-        const inStockItems = inventoryData.filter(item => item.status === 'in-stock');
+        const inStockItems = response.data.filter(item => item.status === 'in-stock');
         
         console.log('FILTERED INVENTORY:', inStockItems);
         setInventory(inStockItems);

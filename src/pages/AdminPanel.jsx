@@ -22,7 +22,7 @@ const AdminPanel = () => {
     sizes: [{ 
       size: 'Small', 
       price: 0,
-      ingredients: [] // Array of {inventoryItem, quantity, unit}
+      recipe: [] // Array of {inventoryItem, quantity, unit}
     }],
     toppings: [],
     status: 'active'
@@ -83,7 +83,7 @@ console.log(inventory);
       sizes: [{ 
         size: 'Small', 
         price: 0,
-        ingredients: []
+        recipe: []
       }],
       toppings: [],
       status: 'active'
@@ -92,19 +92,10 @@ console.log(inventory);
   };
 
  const openEditModal = (product) => {
-  setEditingProduct(product);
-  const openEditModal = (product) => {
-  console.log(
-  product.sizes.map(s => ({
-    size: s.size,
-    hasIngredientsField: 'ingredients' in s,
-    ingredientsValue: s.ingredients
-  }))
-);
+  console.log('EDIT PRODUCT:', product);
 
   setEditingProduct(product);
 
-};
   setFormData({
     name: product.name,
     category: product.category,
@@ -113,26 +104,17 @@ console.log(inventory);
     sizes: product.sizes.map(size => ({
       size: size.size,
       price: size.price,
-      ingredients: (size.ingredients || []).map(ing => ({
-        inventoryItem:
-          ing.inventoryItem?._id ||   // if populated
-          ing.inventoryItem ||        // if already an ID
-          ing.inventoryItemId || '',  // fallback
-        quantity: ing.quantity || 0,
-        unit:
-          ing.unit ||
-          ing.inventoryItem?.unit ||
-          ''
+      recipe: (size.recipe || []).map(r => ({
+        inventoryItemId:
+          r.inventoryItemId?._id || r.inventoryItemId,
+        ingredientName: r.ingredientName,
+        quantity: r.quantity,
+        unit: r.unit
       }))
     })),
     toppings: product.toppings || [],
     status: product.status
-
-    
-  }
-  
-
-  );
+  });
 
   setShowModal(true);
 };
@@ -176,7 +158,7 @@ console.log(inventory);
       sizes: [...formData.sizes, { 
         size: '', 
         price: 0,
-        ingredients: []
+        recipe: []
       }]
     });
   };
@@ -194,14 +176,20 @@ console.log(inventory);
     setFormData({ ...formData, sizes: newSizes });
   };
 
+
+
   // Ingredient management for each size
-  const addIngredientToSize = (sizeIndex) => {
+
+
+  
+  const addIngredientToSize = (sizeIndex) => {r
     const newSizes = [...formData.sizes];
-    if (!newSizes[sizeIndex].ingredients) {
-      newSizes[sizeIndex].ingredients = [];
+    if (!newSizes[sizeIndex].recipe) {
+      newSizes[sizeIndex].recipe = [];
     }
-    newSizes[sizeIndex].ingredients.push({
+    newSizes[sizeIndex].recipe.push({
       inventoryItem: '',
+      ingredientName: '',
       quantity: 0,
       unit: ''
     });

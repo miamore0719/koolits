@@ -126,88 +126,292 @@ export const copyToClipboard = (text) => {
   }
 };
 
-export const printReceipt = (orderData) => {
-  const printWindow = window.open('', '', 'height=600,width=400');
+export const printReceipt = (order) => {
+  const printWindow = window.open('', '', 'width=300,height=600');
   
-  printWindow.document.write(`
+  const receiptHTML = `
+    <!DOCTYPE html>
     <html>
-      <head>
-        <title>Receipt - ${orderData.orderNumber}</title>
-        <style>
-          body { font-family: monospace; padding: 20px; }
-          .center { text-align: center; }
-          .line { border-top: 1px dashed #000; margin: 10px 0; }
-          table { width: 100%; margin: 10px 0; }
-          td { padding: 5px; }
-          .right { text-align: right; }
-          .bold { font-weight: bold; }
-        </style>
-      </head>
-      <body>
-        <div class="center">
-          <h2>KoolITs</h2>
-          <p>Official Receipt</p>
+    <head>
+      <meta charset="utf-8">
+      <title>Receipt #${order.orderNumber || order._id?.slice(-6)}</title>
+      <style>
+        @media print {
+          @page {
+            size: 58mm auto;
+            margin: 0;
+          }
+          body {
+            margin: 0;
+            padding: 0;
+          }
+        }
+        
+        body {
+          width: 58mm;
+          font-family: 'Courier New', monospace;
+          font-size: 10px;
+          line-height: 1.4;
+          padding: 5mm;
+          margin: 0;
+          color: #000;
+        }
+        
+        .center {
+          text-align: center;
+        }
+        
+        .bold {
+          font-weight: bold;
+        }
+        
+        .large {
+          font-size: 14px;
+        }
+        
+        .header {
+          text-align: center;
+          margin-bottom: 10px;
+          border-bottom: 1px dashed #000;
+          padding-bottom: 8px;
+        }
+        
+        .store-name {
+          font-size: 16px;
+          font-weight: bold;
+          margin-bottom: 3px;
+        }
+        
+        .store-info {
+          font-size: 9px;
+          line-height: 1.3;
+        }
+        
+        .section {
+          margin: 10px 0;
+        }
+        
+        .divider {
+          border-top: 1px dashed #000;
+          margin: 8px 0;
+        }
+        
+        .double-divider {
+          border-top: 1px solid #000;
+          margin: 8px 0;
+        }
+        
+        .row {
+          display: flex;
+          justify-content: space-between;
+          margin: 3px 0;
+        }
+        
+        .item-row {
+          margin: 5px 0;
+        }
+        
+        .item-name {
+          font-weight: bold;
+        }
+        
+        .item-details {
+          font-size: 9px;
+          margin-left: 5px;
+          color: #333;
+        }
+        
+        .totals {
+          margin-top: 10px;
+        }
+        
+        .total-row {
+          display: flex;
+          justify-content: space-between;
+          margin: 5px 0;
+        }
+        
+        .grand-total {
+          font-size: 14px;
+          font-weight: bold;
+          border-top: 2px solid #000;
+          border-bottom: 2px solid #000;
+          padding: 5px 0;
+          margin: 8px 0;
+        }
+        
+        .payment-info {
+          margin: 10px 0;
+        }
+        
+        .footer {
+          text-align: center;
+          margin-top: 15px;
+          font-size: 9px;
+          padding-top: 10px;
+          border-top: 1px dashed #000;
+        }
+        
+        .no-print {
+          display: none;
+        }
+        
+        @media screen {
+          body {
+            background: #f0f0f0;
+            padding: 20px;
+          }
+          
+          .no-print {
+            display: block;
+            text-align: center;
+            margin: 20px 0;
+          }
+          
+          .print-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+          }
+          
+          .print-btn:hover {
+            background: #45a049;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="no-print">
+        <button class="print-btn" onclick="window.print()">🖨️ Print Receipt</button>
+      </div>
+      
+      <div class="header">
+        <div class="store-name">YOUR STORE NAME</div>
+        <div class="store-info">
+          123 Main Street<br>
+          City, State 12345<br>
+          Tel: (123) 456-7890
         </div>
-        <div class="line"></div>
-        <p><strong>Order #:</strong> ${orderData.orderNumber}</p>
-        <p><strong>Date:</strong> ${formatDateTime(orderData.orderDate)}</p>
-        <p><strong>Cashier:</strong> ${orderData.cashier}</p>
-        <div class="line"></div>
-        <table>
-          ${orderData.items.map(item => `
-            <tr>
-              <td>${item.quantity}x ${item.name} (${item.size})</td>
-              <td class="right">${formatCurrency(item.subtotal)}</td>
-            </tr>
-          `).join('')}
-        </table>
-        <div class="line"></div>
-        <table>
-          <tr>
-            <td class="bold">Subtotal:</td>
-            <td class="right bold">${formatCurrency(orderData.subtotal)}</td>
-          </tr>
-          ${orderData.discount > 0 ? `
-            <tr>
-              <td>Discount:</td>
-              <td class="right">-${formatCurrency(orderData.discount)}</td>
-            </tr>
-          ` : ''}
-          ${orderData.tax > 0 ? `
-            <tr>
-              <td>Tax:</td>
-              <td class="right">${formatCurrency(orderData.tax)}</td>
-            </tr>
-          ` : ''}
-          <tr>
-            <td class="bold">Total:</td>
-            <td class="right bold">${formatCurrency(orderData.total)}</td>
-          </tr>
-          <tr>
-            <td>Amount Paid:</td>
-            <td class="right">${formatCurrency(orderData.amountPaid)}</td>
-          </tr>
-          <tr>
-            <td>Change:</td>
-            <td class="right">${formatCurrency(orderData.change)}</td>
-          </tr>
-        </table>
-        <div class="line"></div>
-        <div class="center">
-          <p>Thank you for your purchase!</p>
-          <p>Please come again!</p>
+      </div>
+      
+      <div class="section center">
+        <div class="bold">ORDER #${order.orderNumber || order._id?.slice(-6)}</div>
+        <div style="font-size: 9px;">
+          ${new Date(order.orderDate || order.createdAt).toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
         </div>
-      </body>
+        ${order.cashier ? `<div style="font-size: 9px;">Cashier: ${order.cashier}</div>` : ''}
+      </div>
+      
+      <div class="divider"></div>
+      
+      <div class="section">
+        ${order.items.map(item => `
+          <div class="item-row">
+            <div class="row">
+              <span class="item-name">${item.name}</span>
+              <span class="bold">${formatCurrency(item.subtotal)}</span>
+            </div>
+            <div class="item-details">
+              ${item.flavor ? `${item.flavor} / ` : ''}${item.size} x ${item.quantity} @ ${formatCurrency(item.price)}
+            </div>
+            ${item.toppings && item.toppings.length > 0 ? `
+              <div class="item-details">
+                + ${item.toppings.map(t => t.name).join(', ')}
+              </div>
+            ` : ''}
+          </div>
+        `).join('')}
+      </div>
+      
+      <div class="double-divider"></div>
+      
+      <div class="totals">
+        <div class="total-row">
+          <span>Subtotal:</span>
+          <span>${formatCurrency(order.subtotal)}</span>
+        </div>
+        ${order.discount > 0 ? `
+          <div class="total-row">
+            <span>Discount:</span>
+            <span>-${formatCurrency(order.discount)}</span>
+          </div>
+        ` : ''}
+        ${order.tax > 0 ? `
+          <div class="total-row">
+            <span>Tax:</span>
+            <span>${formatCurrency(order.tax)}</span>
+          </div>
+        ` : ''}
+        
+        <div class="total-row grand-total">
+          <span>TOTAL:</span>
+          <span>${formatCurrency(order.total)}</span>
+        </div>
+      </div>
+      
+      <div class="payment-info">
+        <div class="row">
+          <span>Payment Method:</span>
+          <span class="bold">${order.paymentMethod.toUpperCase()}</span>
+        </div>
+        ${order.paymentMethod === 'cash' ? `
+          <div class="row">
+            <span>Amount Paid:</span>
+            <span>${formatCurrency(order.amountPaid)}</span>
+          </div>
+          <div class="row bold">
+            <span>Change:</span>
+            <span>${formatCurrency(order.change)}</span>
+          </div>
+        ` : ''}
+      </div>
+      
+      <div class="footer">
+        <div class="bold" style="margin-bottom: 5px;">THANK YOU!</div>
+        <div>Please come again</div>
+        <div style="margin-top: 8px;">---</div>
+      </div>
+      
+      <script>
+        // Auto-print when loaded
+        window.onload = function() {
+          // Small delay to ensure content is rendered
+          setTimeout(() => {
+            window.print();
+          }, 250);
+        };
+        
+        // Close window after printing
+        window.onafterprint = function() {
+          setTimeout(() => {
+            window.close();
+          }, 100);
+        };
+      </script>
+    </body>
     </html>
-  `);
+  `;
   
+  printWindow.document.write(receiptHTML);
   printWindow.document.close();
-  printWindow.focus();
-  
-  setTimeout(() => {
-    printWindow.print();
-    printWindow.close();
-  }, 250);
+};
+
+// Helper function for currency formatting (if not already in your utils)
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('en-PH', {
+    style: 'currency',
+    currency: 'PHP'
+  }).format(amount);
 };
 
 export const groupBy = (array, key) => {

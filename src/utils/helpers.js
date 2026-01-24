@@ -126,6 +126,40 @@ export const copyToClipboard = (text) => {
   }
 };
 
+export const printReceipt = (order) => {
+  const receipt = `
+YOUR STORE NAME
+------------------------------
+Order #: ${order.orderNumber || order._id.slice(-6)}
+Cashier: ${order.cashier || ''}
+
+${new Date(order.orderDate || order.createdAt).toLocaleString()}
+
+------------------------------
+${order.items.map(item =>
+  `${item.quantity}x ${item.name}
+ ${item.size} @ ${formatCurrency(item.price)}
+ ${item.toppings?.length ? '+ ' + item.toppings.map(t => t.name).join(', ') : ''}
+ ${formatCurrency(item.subtotal)}
+`).join('\n')}
+
+------------------------------
+TOTAL: ${formatCurrency(order.total)}
+PAID:  ${formatCurrency(order.amountPaid)}
+CHANGE:${formatCurrency(order.change)}
+
+------------------------------
+THANK YOU!
+Please come again
+\n\n\n
+`;
+
+  if (window.Android && window.Android.printReceipt) {
+    window.Android.printReceipt(receipt);
+  } else {
+    alert('Printer not connected');
+  }
+};
 
 // Helper function for currency formatting (if not already in your utils)
 
